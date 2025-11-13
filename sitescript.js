@@ -1,3 +1,4 @@
+//Ensure the root element is created so the widget can be mounted
 function ensureRootElement() {
   const existingRoot = document.getElementById("rv-site-root");
   if (existingRoot) {
@@ -7,10 +8,37 @@ function ensureRootElement() {
   const root = document.createElement("div");
   root.id = "rv-site-root";
   root.className = "rv-widget";
-  document.body.insertBefore(root, document.body.firstElementChild);
+  placeRootElement(root);
   return root;
 }
 
+//Place the root element in the DOM
+function placeRootElement(root) {
+  if (!document.body) {
+    document.documentElement.appendChild(root);
+    return;
+  }
+
+  const anchor = findAnchorElement();
+  if (anchor?.parentNode) {
+    anchor.insertAdjacentElement("afterend", root);
+    return;
+  }
+
+  document.body.appendChild(root);
+}
+
+// find the last nav or header element
+function findAnchorElement() {
+  const anchors = document.querySelectorAll("nav, header");
+  if (anchors.length === 0) {
+    return null;
+  }
+
+  return anchors[anchors.length - 1] ?? null;
+}
+
+//Create the content for the widget
 function renderHelloContent(target) {
   target.innerHTML = "";
 
@@ -24,6 +52,7 @@ function renderHelloContent(target) {
   target.appendChild(paragraph);
 }
 
+//Mount the widget to the page
 function mountHelloWidget() {
   try {
     const root = ensureRootElement();
@@ -33,6 +62,7 @@ function mountHelloWidget() {
   }
 }
 
+//Initialize the widget
 function initializeWidget() {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", mountHelloWidget, { once: true });

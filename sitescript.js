@@ -7,7 +7,7 @@ function ensureRootElement() {
   const root = document.createElement("div");
   root.id = "rv-site-root";
   root.className = "rv-widget";
-  document.body.appendChild(root);
+  document.body.insertBefore(root, document.body.firstElementChild);
   return root;
 }
 

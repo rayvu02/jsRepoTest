@@ -1,45 +1,56 @@
 //Ensure the root element is created so the widget can be mounted
 function ensureRootElement() {
+  console.log("[sitescript] ensureRootElement: start");
   const existingRoot = document.getElementById("rv-site-root");
   if (existingRoot) {
+    console.log("[sitescript] ensureRootElement: using existing root", existingRoot);
     return existingRoot;
   }
 
   const root = document.createElement("div");
   root.id = "rv-site-root";
   root.className = "rv-widget";
+  console.log("[sitescript] ensureRootElement: created new root", root);
   placeRootElement(root);
   return root;
 }
 
 //Place the root element in the DOM
 function placeRootElement(root) {
+  console.log("[sitescript] placeRootElement: attempting placement");
   if (!document.body) {
+    console.log("[sitescript] placeRootElement: document.body missing, appending to documentElement");
     document.documentElement.appendChild(root);
     return;
   }
 
   const anchor = findAnchorElement();
   if (anchor?.parentNode) {
+    console.log("[sitescript] placeRootElement: inserting after anchor", anchor);
     anchor.insertAdjacentElement("afterend", root);
     return;
   }
 
+  console.log("[sitescript] placeRootElement: no anchor found, appending to body");
   document.body.appendChild(root);
 }
 
 // find the last nav or header element
 function findAnchorElement() {
   const anchors = document.querySelectorAll("nav, header");
+  console.log("[sitescript] findAnchorElement: found anchors", anchors.length);
   if (anchors.length === 0) {
     return null;
   }
 
-  return anchors[anchors.length - 1] ?? null;
+  const anchor = anchors[anchors.length - 1] ?? null;
+  console.log("[sitescript] findAnchorElement: using anchor", anchor);
+  return anchor;
 }
 
 //Create the content for the widget
 function renderHelloContent(target) {
+  console.log("[sitescript] renderHelloContent: rendering into", target);
   target.innerHTML = "";
 
   const heading = document.createElement("h1");
@@ -50,12 +61,15 @@ function renderHelloContent(target) {
 
   target.appendChild(heading);
   target.appendChild(paragraph);
+  console.log("[sitescript] renderHelloContent: render complete");
 }
 
 //Mount the widget to the page
 function mountHelloWidget() {
+  console.log("[sitescript] mountHelloWidget: start");
   try {
     const root = ensureRootElement();
+    console.log("[sitescript] mountHelloWidget: root ready", root);
     renderHelloContent(root);
   } catch (error) {
     console.error("sitescript.js failed to mount:", error);
@@ -64,8 +78,12 @@ function mountHelloWidget() {
 
 //Initialize the widget
 function initializeWidget() {
+  console.log("[sitescript] initializeWidget: document.readyState", document.readyState);
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", mountHelloWidget, { once: true });
+    document.addEventListener("DOMContentLoaded", () => {
+      console.log("[sitescript] initializeWidget: DOMContentLoaded fired");
+      mountHelloWidget();
+    }, { once: true });
     return;
   }
 
@@ -75,5 +93,6 @@ function initializeWidget() {
 initializeWidget();
 
 if (typeof window !== "undefined") {
+  console.log("[sitescript] expose mount function on window");
   window.rvMountHelloWidget = mountHelloWidget;
 }

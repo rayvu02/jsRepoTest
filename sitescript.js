@@ -24,28 +24,28 @@ function placeRootElement(root) {
     return;
   }
 
-  const anchor = findAnchorElement();
-  if (anchor?.parentNode) {
-    console.log("[sitescript] placeRootElement: inserting after anchor", anchor);
-    anchor.insertAdjacentElement("afterend", root);
+  const header = findHeaderElement();
+  if (header?.parentNode) {
+    console.log("[sitescript] placeRootElement: inserting after header", header);
+    header.insertAdjacentElement("afterend", root);
     return;
   }
 
+  console.log("[sitescript] placeRootElement: header not found, appending to body");
   console.log("[sitescript] placeRootElement: no anchor found, appending to body");
   document.body.appendChild(root);
 }
 
-// find the last nav or header element
-function findAnchorElement() {
-  const anchors = document.querySelectorAll("nav, header");
-  console.log("[sitescript] findAnchorElement: found anchors", anchors.length);
-  if (anchors.length === 0) {
-    return null;
+// Find the header element (<header> tag)
+function findHeaderElement() {
+  const header = document.querySelector("header");
+  if (header) {
+    console.log("[sitescript] findHeaderElement: header found", header);
+    return header;
   }
 
-  const anchor = anchors[anchors.length - 1] ?? null;
-  console.log("[sitescript] findAnchorElement: using anchor", anchor);
-  return anchor;
+  console.log("[sitescript] findHeaderElement: header not found");
+  return null;
 }
 
 //Create the content for the widget

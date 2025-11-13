@@ -32,7 +32,6 @@ function placeRootElement(root) {
   }
 
   console.log("[sitescript] placeRootElement: header not found, appending to body");
-  console.log("[sitescript] placeRootElement: no anchor found, appending to body");
   document.body.appendChild(root);
 }
 

@@ -188,7 +188,7 @@ function loadSiteScriptStyles() {
       padding: 3px;
       background: linear-gradient(90deg, #ff7a18 0%, #af002d 40%, #319197 100%);
       box-sizing: border-box;
-      flex: 0 1 calc(25% - 12px);
+      flex: 0 1 100%; 
       min-width: 190px;
     }
 

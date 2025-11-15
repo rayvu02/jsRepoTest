@@ -255,12 +255,13 @@ function createOfferCard(offerData, index) {
     content.appendChild(highlight);
   }
 
-  if (offerData.description) {
-    const body = document.createElement("p");
-    body.className = "body";
-    body.textContent = offerData.description;
-    content.appendChild(body);
-  }
+  //This is here if we want to add the description however currently we do not
+  // if (offerData.description) {
+  //   const body = document.createElement("p");
+  //   body.className = "body";
+  //   body.textContent = offerData.description;
+  //   content.appendChild(body);
+  // }
 
   if (offerData.linkUrl) {
     const cta = document.createElement("a");
@@ -373,7 +374,7 @@ function resolveImageUrl(candidate) {
 
 /**
  * Escape user-provided content before injecting into HTML.
- * Error messages fetched are ensured to be literal text and not  * executed as code.
+ * Error messages fetched are ensured to be literal text and not as executed as code.
  */
 function escapeHtml(value) {
   const safeValue = (value ?? "").toString();
@@ -427,7 +428,6 @@ function loadSiteScriptStyles() {
     .sitescript-rects {
       display: grid;
       gap: 20px;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     }
 
     .sitescript-rect {

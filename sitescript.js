@@ -91,6 +91,7 @@ function ensureRootElement() {
     return cachedRoot;
   }
 
+  //Find the div that should already exist on the page
   const offersContainer = document.getElementById(OFFERS_CONTAINER_ID);
   if (offersContainer) {
     console.log("[sitescript] ensureRootElement: found offers container", offersContainer);
@@ -99,6 +100,7 @@ function ensureRootElement() {
     return offersContainer;
   }
 
+  //This finds the backup location for the widget if the offers container is not found
   const fallbackRoot = document.getElementById(ROOT_ID);
   if (fallbackRoot) {
     console.log("[sitescript] ensureRootElement: found fallback root", fallbackRoot);
@@ -111,6 +113,7 @@ function ensureRootElement() {
     return null;
   }
 
+  //This creates the backup div if the offers container and the backup is not found
   const newRoot = document.createElement("div");
   newRoot.id = ROOT_ID;
   newRoot.className = "rv-widget";
@@ -427,7 +430,8 @@ function loadSiteScriptStyles() {
 
     .sitescript-rects {
       display: grid;
-      gap: 20px;
+      gap: 24px;
+      grid-template-columns: 1fr;
     }
 
     .sitescript-rect {
@@ -437,6 +441,12 @@ function loadSiteScriptStyles() {
       box-sizing: border-box;
       flex: 0 1 100%;
       transition: transform 180ms ease, box-shadow 180ms ease;
+      display: flex;
+    }
+
+    .sitescript-rect > .inner {
+      flex: 1;
+      height: 100%;
     }
 
     .sitescript-rect:hover {
@@ -447,11 +457,10 @@ function loadSiteScriptStyles() {
     .sitescript-rect .inner {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       background: #fff;
       border-radius: 15px;
-      padding: 20px;
-      min-height: 260px;
+      padding: 16px;
       box-sizing: border-box;
       box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
     }
@@ -459,23 +468,25 @@ function loadSiteScriptStyles() {
     .card-media {
       position: relative;
       width: 100%;
-      aspect-ratio: 16 / 9;
       border-radius: 12px;
       overflow: hidden;
-      background: #e2e8f0;
+      background-color: #9ea3a8;
+      display: flex;
     }
 
     .card-image {
       width: 100%;
-      height: 100%;
-      object-fit: cover;
+      height: auto;
       display: block;
     }
 
     .card-content {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 12px;
     }
 
     .card-tag {
@@ -588,6 +599,22 @@ function loadSiteScriptStyles() {
 
       .sitescript-rect .title {
         font-size: 1.15rem;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .sitescript-rects {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .sitescript-rect .inner {
+        flex-direction: column;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .sitescript-rects {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
     }
   `;

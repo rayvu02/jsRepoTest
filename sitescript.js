@@ -435,6 +435,7 @@ function loadSiteScriptStyles() {
       padding: 3px;
       background: linear-gradient(120deg, #312e81 0%, #1d4ed8 60%, #38bdf8 100%);
       box-sizing: border-box;
+      flex: 0 1 100%;
       transition: transform 180ms ease, box-shadow 180ms ease;
     }
 

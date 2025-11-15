@@ -7,7 +7,7 @@
 const ROOT_ID = "rv-site-root";
 const OFFERS_CONTAINER_ID = "offers-container";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTqMMIq6hYycwe-QiCokW00vnrP1rdI30c9rj7u82gtdEmtQZa7nXV42dHhPeFwe99cogN1JpqJB9x/pub?gid=976470551&single=true&output=csv";
-const FETCH_TIMEOUT_MS = 12000;
+  const FETCH_TIMEOUT_MS = 12000;
 const IMAGE_PLACEHOLDER = "https://picsum.photos/seed/vehicle-special/960/540";
 const CTA_TEXT = "Shop Now";
 const CARD_GRADIENTS = [
@@ -61,9 +61,8 @@ async function mountHelloWidget() {
     renderLoadingState(root);
 
     const csvText = await fetchCsvWithTimeout(CSV_URL, FETCH_TIMEOUT_MS);
-    const parsed = parseCsv(csvText);
-    const dataset = convertRowsToObjects(parsed);
-    const offers = normalizeOffers(dataset);
+    const rows = extractDataRows(csvText);
+    const offers = normalizeOffers(rows);
 
     if (!offers.length) {
       renderEmptyState(root);
@@ -214,7 +213,7 @@ function renderErrorState(target, message) {
 /**
  * Build a single offer card using the shared styles and gradients.
  */
-function createOfferCard(offer, index) {
+function createOfferCard(offerData, index) {
   const wrapper = document.createElement("article");
   wrapper.className = "sitescript-rect";
   wrapper.style.setProperty("--g", CARD_GRADIENTS[index % CARD_GRADIENTS.length]);
@@ -222,14 +221,14 @@ function createOfferCard(offer, index) {
   const inner = document.createElement("div");
   inner.className = "inner";
 
-  if (offer.imageUrl) {
+  if (offerData.imageUrl) {
     const media = document.createElement("div");
     media.className = "card-media";
 
     const img = document.createElement("img");
     img.className = "card-image";
-    img.src = offer.imageUrl;
-    img.alt = offer.title ? `${offer.title} vehicle photo` : "Vehicle photo";
+    img.src = offerData.imageUrl;
+    img.alt = offerData.title ? `${offerData.title} vehicle photo` : "Vehicle photo";
     img.loading = "lazy";
 
     media.appendChild(img);
@@ -241,35 +240,35 @@ function createOfferCard(offer, index) {
 
   const tag = document.createElement("span");
   tag.className = "card-tag";
-  tag.textContent = offer.badge || "Special Offer";
+  tag.textContent = offerData.badge || "Special Offer";
   content.appendChild(tag);
 
   const title = document.createElement("h3");
   title.className = "title";
-  title.textContent = offer.title || "Vehicle Special";
+  title.textContent = offerData.title || "Vehicle Special";
   content.appendChild(title);
 
-  if (offer.highlight) {
+  if (offerData.offer) {
     const highlight = document.createElement("p");
     highlight.className = "highlight";
-    highlight.textContent = offer.highlight;
+    highlight.textContent = offerData.offer;
     content.appendChild(highlight);
   }
 
-  if (offer.description) {
+  if (offerData.description) {
     const body = document.createElement("p");
     body.className = "body";
-    body.textContent = offer.description;
+    body.textContent = offerData.description;
     content.appendChild(body);
   }
 
-  if (offer.linkUrl) {
+  if (offerData.linkUrl) {
     const cta = document.createElement("a");
     cta.className = "card-cta";
-    cta.href = offer.linkUrl;
+    cta.href = offerData.linkUrl;
     cta.target = "_blank";
     cta.rel = "noopener noreferrer";
-    cta.textContent = offer.ctaLabel || CTA_TEXT;
+    cta.textContent = offerData.ctaLabel || CTA_TEXT;
     content.appendChild(cta);
   }
 
@@ -283,173 +282,77 @@ function createOfferCard(offer, index) {
  */
 async function fetchCsvWithTimeout(url, timeout) {
   console.log("[sitescript] fetchCsvWithTimeout: fetching", url);
-  const controller = new AbortController();
+    const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), timeout);
 
-  try {
-    const response = await fetch(url, {
+    try {
+      const response = await fetch(url, {
       method: "GET",
       cache: "no-cache",
       headers: { Accept: "text/csv" },
       signal: controller.signal
-    });
+      });
 
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
 
     return await response.text();
-  } finally {
+    } finally {
     window.clearTimeout(timer);
   }
 }
 
 /**
- * Parse the CSV payload into a header list and 2D array of rows.
+ * Split the CSV export into data rows (starting at row 11) and return a matrix
+ * where each entry represents the original comma-separated columns.
  */
-function parseCsv(text) {
-  if (!text || !text.trim()) {
-    return { headers: [], rows: [] };
+function extractDataRows(csvText) {
+  if (!csvText) {
+    return [];
   }
 
-  const rows = [];
-  let record = [];
-  let current = "";
-  let inQuotes = false;
-
-  for (let index = 0; index < text.length; index += 1) {
-    const char = text[index];
-    const next = text[index + 1];
-
-    if (char === '"') {
-      if (inQuotes && next === '"') {
-        current += '"';
-        index += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-      continue;
-    }
-
-    if (char === "," && !inQuotes) {
-      record.push(current);
-      current = "";
-      continue;
-    }
-
-    if ((char === "\n" || char === "\r") && !inQuotes) {
-      if (current.length || record.length) {
-        record.push(current);
-        rows.push(record);
-        record = [];
-        current = "";
-      }
-      if (char === "\r" && next === "\n") {
-        index += 1;
-      }
-      continue;
-    }
-
-    current += char;
-  }
-
-  if (current.length || record.length) {
-    record.push(current);
-    rows.push(record);
-  }
-
-  const headerRow = rows.shift() ?? [];
-  const headers = headerRow.map((value) => toCamelCase(value ?? ""));
-  return { headers, rows };
-}
-
-/**
- * Turn the 2D array into an array of keyed objects for easier lookups.
- */
-function convertRowsToObjects(parsed) {
-  const { headers, rows } = parsed;
-  return rows.map((cols) => {
-    const entry = {};
-    headers.forEach((header, index) => {
-      entry[header] = (cols[index] ?? "").trim();
-    });
-    entry.__raw = cols.map((value) => (value ?? "").trim());
-    return entry;
-  });
-}
-
-/**
- * Reduce the raw records into normalized offer objects tailored for the UI.
- */
-function normalizeOffers(dataset) {
-  console.log("[sitescript] normalizeOffers: dataset size", dataset.length);
-  return dataset
+  const lines = csvText
+    .split(/\r?\n/)
     .slice(10)
-    .filter(isRecordVisible)
-    .map((record) => {
-      const raw = Array.isArray(record.__raw) ? record.__raw : [];
-      const fallbackTitle = raw[0] ?? "";
-      const fallbackHighlight = raw[1] ?? "";
-      const fallbackDescription = raw[2] ?? "";
-      const fallbackImage = raw[4] ?? "";
-      const fallbackLink = raw[5] ?? "";
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
 
-      return {
-        badge: pickFirst(record, ["badge", "tag", "category", "offerTag"]) || "Special Offer",
-        title: pickFirst(record, ["vehicleName", "offerTitle", "headline", "model", "name"]) || fallbackTitle,
-        highlight: pickFirst(record, ["offerHeadline", "totalSavings", "primaryOffer", "headlineText"]) || fallbackHighlight,
-        description: pickFirst(record, ["offerDescription", "bodyCopy", "details", "copy"]) || fallbackDescription,
-        imageUrl: resolveImageUrl(
-          pickFirst(record, [
-            "image",
-            "imageUrl",
-            "primaryImage",
-            "offerImage",
-            "vehicleImage",
-            "heroImage",
-            "photo"
-          ]) || fallbackImage
-        ),
-        linkUrl:
-          pickFirst(record, ["ctaUrl", "ctaLink", "offerLink", "buttonUrl", "vehicleLink", "link"]) || fallbackLink,
-        ctaLabel: pickFirst(record, ["ctaLabel", "buttonText", "ctaText", "linkLabel"]) || CTA_TEXT
-      };
+  return lines.map((line) =>
+    line
+      .split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+      .map((cell) => cell.replace(/^"|"$/g, "").trim())
+  );
+}
+
+/**
+ * Reduce the raw matrix into normalized offer objects tailored for the UI.
+ */
+function normalizeOffers(rows) {
+  console.log("[sitescript] normalizeOffers: row count", rows.length);
+
+  const MODEL_INDEX = 0; // "Model"
+  const OFFER_INDEX = 1; // "Offer"
+  const DESCRIPTION_INDEX = 2; // "Desc."
+  const VISIBLE_INDEX = 3; // "Visible on Specials"
+  const IMAGE_INDEX = 4; // "Image URL of Vehicle"
+  const LINK_INDEX = 5; // "Link to Vehicle"
+
+  return rows
+    .filter((row) => {
+      const visibility = (row[VISIBLE_INDEX] || "").toString().trim().toLowerCase();
+      return visibility === "true";
     })
+    .map((row) => ({
+      title: (row[MODEL_INDEX] || "").trim(),
+      offer: (row[OFFER_INDEX] || "").trim(),
+      description: (row[DESCRIPTION_INDEX] || "").trim(),
+      imageUrl: resolveImageUrl((row[IMAGE_INDEX] || "").trim()),
+      linkUrl: (row[LINK_INDEX] || "").trim(),
+      badge: "Special Offer",
+      ctaLabel: CTA_TEXT
+    }))
     .filter((offer) => Boolean(offer.title));
-}
-
-/**
- * Determine whether a record should be displayed based on visibility flags.
- */
-function isRecordVisible(record) {
-  const visibility = pickFirst(record, [
-    "containsOffer",
-    "visibleOnSpecials",
-    "visible",
-    "show",
-    "display",
-    "isPublished"
-  ]);
-
-  if (!visibility) {
-    return false;
-  }
-
-  const normalized = visibility.toLowerCase();
-  return normalized === "true" || normalized === "yes" || normalized === "1";
-}
-
-/**
- * Pick the first populated value from a list of possible keys.
- */
-function pickFirst(record, keys) {
-  for (let index = 0; index < keys.length; index += 1) {
-    const key = keys[index];
-    if (record[key] && record[key].trim()) {
-      return record[key].trim();
-    }
-  }
-  return "";
 }
 
 /**
@@ -469,21 +372,12 @@ function resolveImageUrl(candidate) {
 }
 
 /**
- * Convert arbitrary strings to camelCase keys to simplify lookups.
- */
-function toCamelCase(value) {
-  return value
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+(.)/g, (_, chr) => chr.toUpperCase());
-}
-
-/**
  * Escape user-provided content before injecting into HTML.
+ * Error messages fetched are ensured to be literal text and not  * executed as code.
  */
 function escapeHtml(value) {
-  return value.replace(/[&<>"']/g, (match) => {
+  const safeValue = (value ?? "").toString();
+  return safeValue.replace(/[&<>"']/g, (match) => {
     switch (match) {
       case "&":
         return "&amp;";

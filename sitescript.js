@@ -18,6 +18,9 @@ const CARD_GRADIENTS = [
 ];
 
 let cachedRoot = null;
+const TAILWIND_SCRIPT_ID = "tailwind-cdn-script";
+const TAILWIND_CONFIG_ID = "tailwind-cdn-config";
+let tailwindReadyPromise = null;
 
 initializeWidget();
 
@@ -52,6 +55,9 @@ function initializeWidget() {
 async function mountHelloWidget() {
   console.log("[sitescript] mountHelloWidget: start");
   try {
+    await loadTailwind();
+    console.log("[sitescript] mountHelloWidget: Tailwind loaded");
+    
     const root = ensureRootElement();
     if (!root) {
       console.warn("[sitescript] mountHelloWidget: root not resolved, aborting");
@@ -129,11 +135,15 @@ function ensureRootElement() {
  */
 function renderLoadingState(target) {
   console.log("[sitescript] renderLoadingState: rendering loader");
-  loadSiteScriptStyles();
+
   target.innerHTML = `
-    <section class="sitescript-fullwidth-box">
-      <div class="sitescript-inner">
-        <div class="sitescript-loading">Loading live vehicle specials…</div>
+    <section class="bg-gradient-to-br from-white via-blue-50 to-sky-100 py-20 px-4 sm:px-8 text-slate-700">
+      <div class="mx-auto flex max-w-4xl flex-col items-center gap-6 text-center">
+        <span class="relative flex h-12 w-12 items-center justify-center">
+          <span class="absolute h-full w-full rounded-full border-2 border-slate-300/70"></span>
+          <span class="absolute h-full w-full animate-spin rounded-full border-2 border-transparent border-t-sky-500"></span>
+        </span>
+        <p class="text-base font-medium text-slate-600 sm:text-lg">Loading live vehicle specials…</p>
       </div>
     </section>
   `;
@@ -145,17 +155,16 @@ function renderLoadingState(target) {
 function renderOffers(target, offers) {
   console.log("[sitescript] renderOffers: rendering", offers.length, "offers");
 
-  loadSiteScriptStyles();
   target.innerHTML = "";
 
   const section = document.createElement("section");
-  section.className = "sitescript-fullwidth-box";
+  section.className = "bg-gradient-to-br from-white via-blue-50 to-sky-100 py-20 px-4 sm:px-8 text-slate-900";
 
   const inner = document.createElement("div");
-  inner.className = "sitescript-inner";
+  inner.className = "mx-auto w-full max-w-7xl";
 
   const cardsWrapper = document.createElement("div");
-  cardsWrapper.className = "sitescript-rects";
+  cardsWrapper.className = "grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-3";
 
   offers.forEach((offer, index) => {
     const card = createOfferCard(offer, index);
@@ -174,14 +183,11 @@ function renderOffers(target, offers) {
  */
 function renderEmptyState(target) {
   console.log("[sitescript] renderEmptyState: no visible offers found");
-  loadSiteScriptStyles();
   target.innerHTML = `
-    <section class="sitescript-fullwidth-box">
-      <div class="sitescript-inner">
-        <div class="sitescript-empty">
-          <h3>No live offers to display</h3>
-          <p>Update your Google Sheet and mark the specials as visible to surface them here.</p>
-        </div>
+    <section class="bg-gradient-to-br from-white via-blue-50 to-sky-100 py-20 px-4 sm:px-8 text-slate-800">
+      <div class="mx-auto max-w-3xl rounded-3xl border border-sky-200 bg-white/95 p-12 text-center shadow-[0_35px_80px_rgba(14,165,233,0.25)] backdrop-blur-md">
+        <h3 class="text-2xl font-semibold text-slate-900 sm:text-3xl">No live offers to display</h3>
+        <p class="mt-4 text-base text-slate-600 sm:text-lg">Update your Google Sheet and mark the specials as visible to surface them here.</p>
       </div>
     </section>
   `;
@@ -192,15 +198,19 @@ function renderEmptyState(target) {
  */
 function renderErrorState(target, message) {
   console.log("[sitescript] renderErrorState: displaying error", message);
-  loadSiteScriptStyles();
   target.innerHTML = `
-    <section class="sitescript-fullwidth-box">
-      <div class="sitescript-inner">
-        <div class="sitescript-error">
-          <h3>We hit a snag loading specials.</h3>
-          <p>${escapeHtml(message)}</p>
-          <button type="button" class="sitescript-retry" id="rv-retry-fetch">Retry</button>
-        </div>
+    <section class="bg-gradient-to-br from-white via-blue-50 to-sky-100 py-20 px-4 sm:px-8 text-slate-900">
+      <div class="mx-auto max-w-3xl rounded-3xl border border-red-200 bg-white/95 p-12 text-center shadow-[0_35px_80px_rgba(249,115,22,0.25)] backdrop-blur-md">
+        <h3 class="text-2xl font-semibold text-red-600 sm:text-3xl">We hit a snag loading specials.</h3>
+        <p class="mt-4 text-base text-slate-600 sm:text-lg">${escapeHtml(message)}</p>
+        <button
+          type="button"
+          id="rv-retry-fetch"
+          class="relative mt-8 inline-flex items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-red-400 via-orange-400 to-amber-300 bg-[length:200%_100%] px-6 py-3 text-sm font-semibold uppercase tracking-[0.32em] text-red-900 shadow-lg transition-transform duration-300 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-red-300/70 focus:ring-offset-2 focus:ring-offset-white animate-cta-gradient"
+        >
+          <span class="pointer-events-none absolute inset-0 translate-x-[-140%] bg-[linear-gradient(120deg,rgba(255,255,255,0.9),rgba(255,255,255,0.2),rgba(255,255,255,0.6))] opacity-0 animate-cta-shimmer"></span>
+          <span class="relative">Retry</span>
+        </button>
       </div>
     </section>
   `;
@@ -218,66 +228,63 @@ function renderErrorState(target, message) {
  */
 function createOfferCard(offerData, index) {
   const wrapper = document.createElement("article");
-  wrapper.className = "sitescript-rect";
-  wrapper.style.setProperty("--g", CARD_GRADIENTS[index % CARD_GRADIENTS.length]);
+  wrapper.className = "relative isolate rounded-[28px] p-[3px] overflow-hidden animate-border-streak shadow-[0_20px_60px_rgba(59,130,246,0.3)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(59,130,246,0.4)]";
 
-  const inner = document.createElement("div");
-  inner.className = "inner";
+  const body = document.createElement("div");
+  body.className = "flex h-full flex-col gap-6 rounded-[26px] border border-white/60 bg-white p-6 sm:p-8";
 
   if (offerData.imageUrl) {
     const media = document.createElement("div");
-    media.className = "card-media";
+    media.className = "relative w-full max-h-64 overflow-hidden rounded-2xl bg-slate-100 flex items-center justify-center";
 
     const img = document.createElement("img");
-    img.className = "card-image";
+    img.className = "h-auto w-full object-contain";
     img.src = offerData.imageUrl;
     img.alt = offerData.title ? `${offerData.title} vehicle photo` : "Vehicle photo";
     img.loading = "lazy";
+    img.decoding = "async";
 
     media.appendChild(img);
-    inner.appendChild(media);
+    body.appendChild(media);
   }
 
   const content = document.createElement("div");
-  content.className = "card-content";
+  content.className = "flex flex-col gap-4 rounded-2xl bg-slate-50/90 p-6 shadow-inner";
 
   const tag = document.createElement("span");
-  tag.className = "card-tag";
+  tag.className = "inline-flex w-max items-center rounded-full bg-sky-100 px-4 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-sky-600";
   tag.textContent = offerData.badge || "Special Offer";
   content.appendChild(tag);
 
   const title = document.createElement("h3");
-  title.className = "title";
+  title.className = "text-2xl font-semibold text-slate-900 sm:text-3xl";
   title.textContent = offerData.title || "Vehicle Special";
   content.appendChild(title);
 
   if (offerData.offer) {
-    const highlight = document.createElement("p");
-    highlight.className = "highlight";
-    highlight.textContent = offerData.offer;
-    content.appendChild(highlight);
+    const offerLine = document.createElement("p");
+    offerLine.className = "text-lg font-semibold text-sky-600 sm:text-xl";
+    offerLine.textContent = offerData.offer;
+    content.appendChild(offerLine);
   }
-
-  //This is here if we want to add the description however currently we do not
-  // if (offerData.description) {
-  //   const body = document.createElement("p");
-  //   body.className = "body";
-  //   body.textContent = offerData.description;
-  //   content.appendChild(body);
-  // }
 
   if (offerData.linkUrl) {
     const cta = document.createElement("a");
-    cta.className = "card-cta";
+    cta.className = "relative mt-2 inline-flex w-full items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white shadow-[0_10px_30px_rgba(79,70,229,0.4)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(79,70,229,0.5)] focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:ring-offset-2 focus:ring-offset-white animate-cta-streak";
     cta.href = offerData.linkUrl;
     cta.target = "_blank";
     cta.rel = "noopener noreferrer";
-    cta.textContent = offerData.ctaLabel || CTA_TEXT;
+
+    const label = document.createElement("span");
+    label.className = "relative z-10";
+    label.textContent = offerData.ctaLabel || CTA_TEXT;
+    cta.appendChild(label);
+
     content.appendChild(cta);
   }
 
-  inner.appendChild(content);
-  wrapper.appendChild(inner);
+  body.appendChild(content);
+  wrapper.appendChild(body);
   return wrapper;
 }
 
@@ -399,228 +406,149 @@ function escapeHtml(value) {
   });
 }
 
-/**
- * Inject shared styles only once to keep the widget self-contained.
- */
-function loadSiteScriptStyles() {
-  if (document.getElementById("sitescript-shared-styles")) {
+function configureTailwind() {
+  if (typeof window === "undefined") {
     return;
   }
 
-  const css = `
-    .sitescript-fullwidth-box {
-      width: 100%;
-      box-sizing: border-box;
-      background: #f8fafc;
-      padding: 36px 16px;
-      display: flex;
-      justify-content: center;
-      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-      color: #0f172a;
-    }
-
-    .sitescript-inner {
-      width: 100%;
-      max-width: 1200px;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
-    }
-
-    .sitescript-rects {
-      display: grid;
-      gap: 24px;
-      grid-template-columns: 1fr;
-    }
-
-    .sitescript-rect {
-      border-radius: 18px;
-      padding: 3px;
-      background: linear-gradient(120deg, #312e81 0%, #1d4ed8 60%, #38bdf8 100%);
-      box-sizing: border-box;
-      flex: 0 1 100%;
-      transition: transform 180ms ease, box-shadow 180ms ease;
-      display: flex;
-    }
-
-    .sitescript-rect > .inner {
-      flex: 1;
-      height: 100%;
-    }
-
-    .sitescript-rect:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
-    }
-
-    .sitescript-rect .inner {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      background: #fff;
-      border-radius: 15px;
-      padding: 16px;
-      box-sizing: border-box;
-      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
-    }
-
-    .card-media {
-      position: relative;
-      width: 100%;
-      border-radius: 12px;
-      overflow: hidden;
-      background-color: #9ea3a8;
-      display: flex;
-    }
-
-    .card-image {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    .card-content {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      background: #f1f5f9;
-      border-radius: 12px;
-      padding: 12px;
-    }
-
-    .card-tag {
-      display: inline-flex;
-      align-self: flex-start;
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.08);
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #1f2937;
-    }
-
-    .sitescript-rect .title {
-      margin: 0;
-      font-size: 1.35rem;
-      line-height: 1.3;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    .card-content .highlight {
-      margin: 0;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #1d4ed8;
-    }
-
-    .sitescript-rect .body {
-      margin: 0;
-      font-size: 0.95rem;
-      line-height: 1.6;
-      color: #475569;
-    }
-
-    .card-cta {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: fit-content;
-      padding: 10px 18px;
-      border-radius: 999px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      background: #1d4ed8;
-      color: #fff;
-      transition: background 160ms ease, transform 160ms ease;
-    }
-
-    .card-cta:hover {
-      background: #1e40af;
-      transform: translateY(-2px);
-    }
-
-    .sitescript-loading,
-    .sitescript-empty,
-    .sitescript-error {
-      padding: 32px;
-      border-radius: 18px;
-      background: rgba(15, 23, 42, 0.06);
-      text-align: center;
-    }
-
-    .sitescript-empty h3,
-    .sitescript-error h3 {
-      margin: 0 0 12px 0;
-      font-size: 1.25rem;
-    }
-
-    .sitescript-empty p,
-    .sitescript-error p {
-      margin: 0;
-      color: #475569;
-    }
-
-    .sitescript-retry {
-      margin-top: 20px;
-      padding: 10px 18px;
-      border: none;
-      border-radius: 999px;
-      background: #1d4ed8;
-      color: #fff;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      cursor: pointer;
-      transition: background 160ms ease, transform 160ms ease;
-    }
-
-    .sitescript-retry:hover {
-      background: #1e40af;
-      transform: translateY(-2px);
-    }
-
-    @media (max-width: 640px) {
-      .sitescript-fullwidth-box {
-        padding: 24px 12px;
-      }
-
-      .sitescript-inner {
-        gap: 20px;
-      }
-
-      .sitescript-rect .inner {
-        padding: 16px;
-      }
-
-      .sitescript-rect .title {
-        font-size: 1.15rem;
-      }
-    }
-
-    @media (min-width: 768px) {
-      .sitescript-rects {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .sitescript-rect .inner {
-        flex-direction: column;
-      }
-    }
-
-    @media (min-width: 1200px) {
-      .sitescript-rects {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-    }
-  `;
+  if (document.getElementById(TAILWIND_CONFIG_ID)) {
+    return;
+  }
 
   const style = document.createElement("style");
-  style.id = "sitescript-shared-styles";
-  style.textContent = css;
+  style.id = TAILWIND_CONFIG_ID;
+  style.textContent = `
+    @property --border-angle {
+      syntax: '<angle>';
+      inherits: false;
+      initial-value: 0deg;
+    }
+
+    @keyframes border-rotate {
+      0% {
+        --border-angle: 0deg;
+      }
+      100% {
+        --border-angle: 360deg;
+      }
+    }
+
+    @keyframes cta-streak {
+      0% {
+        transform: translateX(-200%) skewX(-15deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.7;
+      }
+      50% {
+        opacity: 0.9;
+      }
+      90% {
+        opacity: 0.7;
+      }
+      100% {
+        transform: translateX(200%) skewX(-15deg);
+        opacity: 0;
+      }
+    }
+
+    .animate-border-streak {
+      position: relative;
+      background: linear-gradient(to bottom right, rgb(56, 189, 248), rgb(59, 130, 246), rgb(79, 70, 229));
+      background-clip: padding-box;
+    }
+
+    .animate-border-streak::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 3px;
+      background: conic-gradient(
+        from var(--border-angle),
+        transparent 0deg,
+        transparent 60deg,
+        rgb(251, 146, 60) 90deg,
+        rgb(239, 68, 68) 180deg,
+        rgb(236, 72, 153) 270deg,
+        transparent 300deg,
+        transparent 360deg
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, 
+                    linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      animation: border-rotate 3s linear infinite;
+      pointer-events: none;
+    }
+
+    .animate-cta-streak::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgb(251, 146, 60) 20%, 
+        rgb(239, 68, 68) 50%, 
+        rgb(236, 72, 153) 80%, 
+        transparent 100%);
+      border-radius: inherit;
+      animation: cta-streak 2.5s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+  `;
   document.head.appendChild(style);
 }
+
+function loadTailwind() {
+  if (typeof window === "undefined") {
+    return Promise.resolve();
+  }
+
+  configureTailwind();
+
+  if (tailwindReadyPromise) {
+    return tailwindReadyPromise;
+  }
+
+  tailwindReadyPromise = new Promise((resolve, reject) => {
+    const existingScript = document.getElementById(TAILWIND_SCRIPT_ID);
+    if (existingScript) {
+      if (existingScript.dataset.ready === "true") {
+        resolve();
+        return;
+      }
+      existingScript.addEventListener(
+        "load",
+        () => {
+          existingScript.dataset.ready = "true";
+          resolve();
+        },
+        { once: true }
+      );
+      existingScript.addEventListener("error", reject, { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://cdn.tailwindcss.com";
+    script.id = TAILWIND_SCRIPT_ID;
+    script.onload = () => {
+      script.dataset.ready = "true";
+      resolve();
+    };
+    script.onerror = (error) => reject(error);
+    document.head.appendChild(script);
+  });
+
+  return tailwindReadyPromise;
+}
+
+// Kick off Tailwind loading immediately
+configureTailwind();
+loadTailwind();

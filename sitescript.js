@@ -283,7 +283,7 @@ function createOfferCard(offerData, index) {
   if (offerData.linkUrl) {
     const cta = document.createElement("a");
     //Stlying for the button, rounded corners, background color, padding, font size, font weight, uppercase, text color white, shadow, hover effect, and animation for the button
-    cta.className = "relative mt-2 inline-flex w-full items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white shadow-[0_10px_30px_rgba(79,70,229,0.4)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(79,70,229,0.5)] focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:ring-offset-2 focus:ring-offset-white animate-cta-streak";
+    cta.className = "card-cta relative mt-2 inline-flex w-full items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white shadow-[0_10px_30px_rgba(79,70,229,0.4)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(79,70,229,0.5)] focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:ring-offset-2 focus:ring-offset-white animate-cta-streak";
     cta.href = offerData.linkUrl;
     cta.target = "_blank";
     cta.rel = "noopener noreferrer";
@@ -518,6 +518,14 @@ function configureTailwind() {
       animation: cta-streak 4s ease-in-out infinite;
       pointer-events: none;
       z-index: 1;
+    }
+
+    /* Prevent visited link color from turning buttons black */
+    a.card-cta,
+    a.card-cta:visited,
+    a.card-cta:hover,
+    a.card-cta:active {
+      color: white !important;
     }
   `;
   document.head.appendChild(style);

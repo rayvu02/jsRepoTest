@@ -164,7 +164,7 @@ function renderOffers(target, offers) {
   inner.className = "mx-auto w-full max-w-7xl";
 
   const cardsWrapper = document.createElement("div");
-  cardsWrapper.className = "grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-3";
+  cardsWrapper.className = "grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 auto-rows-fr";
 
   offers.forEach((offer, index) => {
     const card = createOfferCard(offer, index);
@@ -228,17 +228,17 @@ function renderErrorState(target, message) {
  */
 function createOfferCard(offerData, index) {
   const wrapper = document.createElement("article");
-  wrapper.className = "relative isolate rounded-[28px] p-[3px] overflow-hidden animate-border-streak shadow-[0_20px_60px_rgba(59,130,246,0.3)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(59,130,246,0.4)]";
+  wrapper.className = "relative isolate h-full rounded-[28px] p-[3px] overflow-hidden animate-border-streak shadow-[0_20px_60px_rgba(59,130,246,0.3)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(59,130,246,0.4)]";
 
   const body = document.createElement("div");
-  body.className = "flex h-full flex-col gap-6 rounded-[26px] border border-white/60 bg-white p-6 sm:p-8";
+  body.className = "flex h-full flex-col rounded-[26px] border border-white/60 bg-white p-3";
 
   if (offerData.imageUrl) {
     const media = document.createElement("div");
-    media.className = "relative w-full max-h-64 overflow-hidden rounded-2xl bg-slate-100 flex items-center justify-center";
+    media.className = "relative w-full aspect-[16/9] overflow-hidden rounded-xl flex items-center justify-center";
 
     const img = document.createElement("img");
-    img.className = "h-auto w-full object-contain";
+    img.className = "h-full w-full object-contain";
     img.src = offerData.imageUrl;
     img.alt = offerData.title ? `${offerData.title} vehicle photo` : "Vehicle photo";
     img.loading = "lazy";
@@ -249,24 +249,29 @@ function createOfferCard(offerData, index) {
   }
 
   const content = document.createElement("div");
-  content.className = "flex flex-col gap-4 rounded-2xl bg-slate-50/90 p-6 shadow-inner";
+  content.className = "flex flex-col flex-1 justify-between gap-3 rounded-xl bg-slate-50/90 p-4 mt-3 shadow-inner";
+
+  const textWrapper = document.createElement("div");
+  textWrapper.className = "flex flex-col gap-3";
 
   const tag = document.createElement("span");
   tag.className = "inline-flex w-max items-center rounded-full bg-sky-100 px-4 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-sky-600";
   tag.textContent = offerData.badge || "Special Offer";
-  content.appendChild(tag);
+  textWrapper.appendChild(tag);
 
   const title = document.createElement("h3");
-  title.className = "text-2xl font-semibold text-slate-900 sm:text-3xl";
+  title.className = "text-xl font-semibold text-slate-900 line-clamp-2";
   title.textContent = offerData.title || "Vehicle Special";
-  content.appendChild(title);
+  textWrapper.appendChild(title);
 
   if (offerData.offer) {
     const offerLine = document.createElement("p");
-    offerLine.className = "text-lg font-semibold text-sky-600 sm:text-xl";
+    offerLine.className = "text-base font-semibold text-sky-600 line-clamp-3";
     offerLine.textContent = offerData.offer;
-    content.appendChild(offerLine);
+    textWrapper.appendChild(offerLine);
   }
+
+  content.appendChild(textWrapper);
 
   if (offerData.linkUrl) {
     const cta = document.createElement("a");
@@ -497,7 +502,7 @@ function configureTailwind() {
         rgb(236, 72, 153) 80%, 
         transparent 100%);
       border-radius: inherit;
-      animation: cta-streak 2.5s ease-in-out infinite;
+      animation: cta-streak 4s ease-in-out infinite;
       pointer-events: none;
       z-index: 1;
     }

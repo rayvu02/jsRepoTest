@@ -7,20 +7,14 @@
 const ROOT_ID = "rv-site-root";
 const OFFERS_CONTAINER_ID = "offers-container";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTqMMIq6hYycwe-QiCokW00vnrP1rdI30c9rj7u82gtdEmtQZa7nXV42dHhPeFwe99cogN1JpqJB9x/pub?gid=976470551&single=true&output=csv";
-  const FETCH_TIMEOUT_MS = 12000;
-const IMAGE_PLACEHOLDER = "https://picsum.photos/seed/vehicle-special/960/540";
+const FETCH_TIMEOUT_MS = 12000;
+const IMAGE_PLACEHOLDER = "";
 const CTA_TEXT = "Shop Now";
-const CARD_GRADIENTS = [
-  "linear-gradient(90deg, #6a11cb 0%, #2575fc 100%)",
-  "linear-gradient(90deg, #ff7a18 0%, #af002d 45%, #319197 100%)",
-  "linear-gradient(90deg, #00b09b 0%, #96c93d 100%)",
-  "linear-gradient(90deg, #f7797d 0%, #FBD786 50%, #C6FFDD 100%)"
-];
 
-let cachedRoot = null;
-const TAILWIND_SCRIPT_ID = "tailwind-cdn-script";
-const TAILWIND_CONFIG_ID = "tailwind-cdn-config";
-let tailwindReadyPromise = null;
+let cachedRoot = null; //DOM element where the widget will be mounted
+const TAILWIND_SCRIPT_ID = "tailwind-cdn-script"; //ID of the Tailwind CSS script
+const TAILWIND_CONFIG_ID = "tailwind-cdn-config"; //ID of the Tailwind CSS config
+let tailwindReadyPromise = null; //Promise that resolves when Tailwind CSS is loaded so it is not loaded multiple times
 
 initializeWidget();
 
@@ -46,7 +40,7 @@ function initializeWidget() {
     return;
   }
 
-  void mountHelloWidget();
+  void mountHelloWidget(); //Mount the widget once the DOM is ready
 }
 
 /**
@@ -55,20 +49,20 @@ function initializeWidget() {
 async function mountHelloWidget() {
   console.log("[sitescript] mountHelloWidget: start");
   try {
-    await loadTailwind();
+    await loadTailwind(); //Wait for Tailwind CSS to load, things will break if it's not loaded first
     console.log("[sitescript] mountHelloWidget: Tailwind loaded");
     
-    const root = ensureRootElement();
+    const root = ensureRootElement(); //Gets or creates the root element where the widget will be mounted
     if (!root) {
-      console.warn("[sitescript] mountHelloWidget: root not resolved, aborting");
+      console.warn("[sitescript] mountHelloWidget: root not found, abort");
       return;
     }
 
     renderLoadingState(root);
 
-    const csvText = await fetchCsvWithTimeout(CSV_URL, FETCH_TIMEOUT_MS);
-    const rows = extractDataRows(csvText);
-    const offers = normalizeOffers(rows);
+    const csvText = await fetchCsvWithTimeout(CSV_URL, FETCH_TIMEOUT_MS); //Get the csv from the google sheet link
+    const rows = extractDataRows(csvText); //Extract the data from the csv
+    const offers = normalizeOffers(rows); //Normalize the data (break them down into what we need and want)
 
     if (!offers.length) {
       renderEmptyState(root);
@@ -92,6 +86,7 @@ async function mountHelloWidget() {
 function ensureRootElement() {
   console.log("[sitescript] ensureRootElement: start");
 
+  //Check if the root element has already been found and cached, use it if it is
   if (cachedRoot && document.body.contains(cachedRoot)) {
     console.log("[sitescript] ensureRootElement: using cached root", cachedRoot);
     return cachedRoot;
@@ -114,6 +109,7 @@ function ensureRootElement() {
     return fallbackRoot;
   }
 
+  //Check if the body element exists, if not, return null means we have no where to put it
   if (!document.body) {
     console.warn("[sitescript] ensureRootElement: document.body missing");
     return null;
@@ -136,6 +132,7 @@ function ensureRootElement() {
 function renderLoadingState(target) {
   console.log("[sitescript] renderLoadingState: rendering loader");
 
+  //Basic stlying for the whole widget while loading
   target.innerHTML = `
     <section class="bg-gradient-to-br from-white via-blue-50 to-sky-100 py-20 px-4 sm:px-8 text-slate-700">
       <div class="mx-auto flex max-w-4xl flex-col items-center gap-6 text-center">
@@ -155,22 +152,25 @@ function renderLoadingState(target) {
 function renderOffers(target, offers) {
   console.log("[sitescript] renderOffers: rendering", offers.length, "offers");
 
-  target.innerHTML = "";
+  target.innerHTML = ""; //clear the target element (removes any existing content)
 
   const section = document.createElement("section");
-  section.className = "bg-gradient-to-br from-white via-blue-50 to-sky-100 py-20 px-4 sm:px-8 text-slate-900";
+  section.className = "bg-gradient-to-br from-white via-blue-50 to-sky-100 py-20 px-4 sm:px-8 text-slate-900"; //back ground gradient, TODO: Might remove this later
 
   const inner = document.createElement("div");
   inner.className = "mx-auto w-full max-w-7xl";
 
   const cardsWrapper = document.createElement("div");
-  cardsWrapper.className = "grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 auto-rows-fr";
+  //Grid layout for the cards, 1 column on mobile, 2 columns on tablet, 3 columns on desktop
+  cardsWrapper.className = "grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 auto-rows-fr"; 
 
+  //Create a card for each offer
   offers.forEach((offer, index) => {
     const card = createOfferCard(offer, index);
     cardsWrapper.appendChild(card);
   });
 
+  //Nest objects together: cards go into the inner div, and the inner div goes into the section
   inner.appendChild(cardsWrapper);
   section.appendChild(inner);
   target.appendChild(section);
@@ -227,14 +227,17 @@ function renderErrorState(target, message) {
  * Build a single offer card using the shared styles and gradients.
  */
 function createOfferCard(offerData, index) {
-  const wrapper = document.createElement("article");
+  const wrapper = document.createElement("article"); //Create a new article element for the card
+  //Stlying for the card, rounded corners, border, shadow, and hover effect, set height, and the animation for the border
   wrapper.className = "relative isolate h-full rounded-[28px] p-[3px] overflow-hidden animate-border-streak shadow-[0_20px_60px_rgba(59,130,246,0.3)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(59,130,246,0.4)]";
 
   const body = document.createElement("div");
+  //body stlying for the card, rounded corners, border, background color, and padding
   body.className = "flex h-full flex-col rounded-[26px] border border-white/60 bg-white p-3";
 
   if (offerData.imageUrl) {
     const media = document.createElement("div");
+    //media stlying for the image, rounded corners, overflow hidden, and mainly maintaing the aspect ratio
     media.className = "relative w-full aspect-[16/9] overflow-hidden rounded-xl flex items-center justify-center";
 
     const img = document.createElement("img");
@@ -242,30 +245,33 @@ function createOfferCard(offerData, index) {
     img.src = offerData.imageUrl;
     img.alt = offerData.title ? `${offerData.title} vehicle photo` : "Vehicle photo";
     img.loading = "lazy";
-    img.decoding = "async";
+    img.decoding = "async"; //ayncronously load the image for performance
 
     media.appendChild(img);
     body.appendChild(media);
   }
 
-  const content = document.createElement("div");
+  const content = document.createElement("div"); //Create a new div element for the content the content area
   content.className = "flex flex-col flex-1 justify-between gap-3 rounded-xl bg-slate-50/90 p-4 mt-3 shadow-inner";
 
   const textWrapper = document.createElement("div");
   textWrapper.className = "flex flex-col gap-3";
 
   const tag = document.createElement("span");
+  //tag stlying for the tag (Special Offer), rounded corners, background color, padding, font size, font weight, uppercase, and text color
   tag.className = "inline-flex w-max items-center rounded-full bg-sky-100 px-4 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-sky-600";
   tag.textContent = offerData.badge || "Special Offer";
   textWrapper.appendChild(tag);
 
-  const title = document.createElement("h3");
+  const title = document.createElement("h3"); //Create a new h3 element for the title (name of the vehicle)
+  //title stlying for the title, font size, font weight, line clamp, and text color
   title.className = "text-xl font-semibold text-slate-900 line-clamp-2";
   title.textContent = offerData.title || "Vehicle Special";
   textWrapper.appendChild(title);
 
   if (offerData.offer) {
-    const offerLine = document.createElement("p");
+    const offerLine = document.createElement("p"); //Create a new p element for the offer (price of the vehicle)
+    //offerLine stlying for the offer, font size, font weight, line clamp, and text color
     offerLine.className = "text-base font-semibold text-sky-600 line-clamp-3";
     offerLine.textContent = offerData.offer;
     textWrapper.appendChild(offerLine);
@@ -273,14 +279,17 @@ function createOfferCard(offerData, index) {
 
   content.appendChild(textWrapper);
 
+  //if the link url is present, create a new a element button to click to go to the vehicle page
   if (offerData.linkUrl) {
     const cta = document.createElement("a");
+    //Stlying for the button, rounded corners, background color, padding, font size, font weight, uppercase, text color white, shadow, hover effect, and animation for the button
     cta.className = "relative mt-2 inline-flex w-full items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 px-6 py-3 text-sm font-bold uppercase tracking-[0.3em] text-white shadow-[0_10px_30px_rgba(79,70,229,0.4)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(79,70,229,0.5)] focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:ring-offset-2 focus:ring-offset-white animate-cta-streak";
     cta.href = offerData.linkUrl;
     cta.target = "_blank";
     cta.rel = "noopener noreferrer";
 
-    const label = document.createElement("span");
+    const label = document.createElement("span"); //Create a new span element for the label (text of the button)
+    //label stlying for the label, relative position, z-index
     label.className = "relative z-10";
     label.textContent = offerData.ctaLabel || CTA_TEXT;
     cta.appendChild(label);
@@ -411,6 +420,10 @@ function escapeHtml(value) {
   });
 }
 
+/**
+ * Configure Tailwind CSS to use the custom properties for the border animation. 
+ * This is used to create the animated border effect on the cards.
+ */
 function configureTailwind() {
   if (typeof window === "undefined") {
     return;
@@ -510,17 +523,23 @@ function configureTailwind() {
   document.head.appendChild(style);
 }
 
+/**
+ * Load Tailwind CSS from the CDN.
+ */
 function loadTailwind() {
   if (typeof window === "undefined") {
     return Promise.resolve();
   }
 
+  //Inject the custom tailwind animation before the tailwind script is loaded.
   configureTailwind();
 
+  //If the tailwind script is already loaded, return the promise
   if (tailwindReadyPromise) {
     return tailwindReadyPromise;
   }
 
+  //This creates a new promise to load the tailwind script, it will resolve when the script is loaded and the custom animation is injected.
   tailwindReadyPromise = new Promise((resolve, reject) => {
     const existingScript = document.getElementById(TAILWIND_SCRIPT_ID);
     if (existingScript) {
@@ -540,8 +559,9 @@ function loadTailwind() {
       return;
     }
 
-    const script = document.createElement("script");
-    script.src = "https://cdn.tailwindcss.com";
+    //This allows us to get access to tailwind classes via the tailwind CDN
+    const script = document.createElement("script"); //Create a new script element to load the tailwind script
+    script.src = "https://cdn.tailwindcss.com"; //Set the source of the script to the tailwind css cdn
     script.id = TAILWIND_SCRIPT_ID;
     script.onload = () => {
       script.dataset.ready = "true";

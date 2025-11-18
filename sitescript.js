@@ -161,8 +161,8 @@ function renderOffers(target, offers) {
   inner.className = "mx-auto w-full max-w-7xl";
 
   const cardsWrapper = document.createElement("div");
-  //Grid layout for the cards, 1 column on mobile, 2 columns on tablet, 3 columns on desktop
-  cardsWrapper.className = "grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3 auto-rows-fr"; 
+  //Grid layout for the cards: 1 column on mobile, 2 columns max on larger screens for wider cards
+  cardsWrapper.className = "grid grid-cols-1 gap-10 lg:grid-cols-2 auto-rows-fr"; 
 
   //Create a card for each offer
   offers.forEach((offer, index) => {
@@ -233,29 +233,28 @@ function createOfferCard(offerData, index) {
 
   const body = document.createElement("div");
   //body stlying for the card, rounded corners, border, background color, and padding
-  body.className = "flex h-full flex-col rounded-[26px] border border-white/60 bg-white p-3";
+  body.className = "flex h-full flex-col rounded-[26px] border border-white/60 bg-white p-2";
 
   if (offerData.imageUrl) {
     const media = document.createElement("div");
-    //media stlying for the image, rounded corners, overflow hidden, and mainly maintaing the aspect ratio
-    media.className = "relative w-full aspect-[16/9] overflow-hidden rounded-xl flex items-center justify-center";
+    //media container: uses background-image so we can control sizing, removes forced aspect ratio
+    media.className = "relative w-full min-h-64 max-h-80 overflow-hidden rounded-xl bg-slate-100 bg-center bg-no-repeat";
+    //set vehicle photo as background
+    media.style.backgroundImage = `url('${offerData.imageUrl}')`;
+    //background-size contain shows full image, will scale to fit without cropping
+    media.style.backgroundSize = "contain";
+    //add ARIA labels for accessibility since background images aren't read by screen readers
+    media.setAttribute('role', 'img');
+    media.setAttribute('aria-label', offerData.title ? `${offerData.title} vehicle photo` : 'Vehicle photo');
 
-    const img = document.createElement("img");
-    img.className = "h-full w-full object-contain";
-    img.src = offerData.imageUrl;
-    img.alt = offerData.title ? `${offerData.title} vehicle photo` : "Vehicle photo";
-    img.loading = "lazy";
-    img.decoding = "async"; //ayncronously load the image for performance
-
-    media.appendChild(img);
     body.appendChild(media);
   }
 
   const content = document.createElement("div"); //Create a new div element for the content the content area
-  content.className = "flex flex-col flex-1 justify-between gap-3 rounded-xl bg-slate-50/90 p-4 mt-3 shadow-inner";
+  content.className = "flex flex-col flex-1 justify-between gap-2 rounded-xl bg-slate-50/90 p-3 mt-2 shadow-inner";
 
   const textWrapper = document.createElement("div");
-  textWrapper.className = "flex flex-col gap-3";
+  textWrapper.className = "flex flex-col gap-2";
 
   const tag = document.createElement("span");
   //tag stlying for the tag (Special Offer), rounded corners, background color, padding, font size, font weight, uppercase, and text color

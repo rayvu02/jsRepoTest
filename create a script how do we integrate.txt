@@ -1,0 +1,24 @@
+create a script how do we integrate the css, html, etc to get the same result as the new vehicle specials with only one script tag
+
+Write the html in the html file so it has better extension help.
+
+Make the stuff work with the output.css file. Link to repo: https://github.com/dev-leadsplus/automotive-scripts
+
+Things should be auto, we pre make components, and divs where components go and people can select which components they want and we pull data from the DB
+
+TODO: 
+- Fix image sizing
+- Officate code
+- Banner
+- Trade-in button
+- Figure out how to get a basic script to be generate dynamically by another script and stored in the S3 bucket in a dynamic path with auth. (Auth to be done from the mono repo)
+
+
+Integrate in budget and expense management: go into an account or org and have it as a setting to enable it
+	
+	Track campaign costs and expenses. Make some graphs like the invoices page
+
+
+Build the same components in the analytics page and generate dynamically a report on another site. Another company has the report with data and we need them to send it to an API and we break it down. Our API processes into the DB and we create unique dash boards that has a unique id for that report.l
+
+This link should be public, so people should be able to access this page. We will need to make another domain for it

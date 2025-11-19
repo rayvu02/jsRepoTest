@@ -7,7 +7,7 @@
 const ROOT_ID = "rv-site-root";
 const OFFERS_CONTAINER_ID = "offers-container";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTqMMIq6hYycwe-QiCokW00vnrP1rdI30c9rj7u82gtdEmtQZa7nXV42dHhPeFwe99cogN1JpqJB9x/pub?gid=976470551&single=true&output=csv";
-const FETCH_TIMEOUT_MS = 12000;
+  const FETCH_TIMEOUT_MS = 12000;
 const IMAGE_PLACEHOLDER = "";
 const CTA_TEXT = "Shop Now";
 const BANNER_HEADING = "New Vehicle Offers & Incentives";
@@ -157,7 +157,7 @@ function renderOffers(target, offers) {
   target.innerHTML = ""; //clear the target element (removes any existing content)
 
   const section = document.createElement("section");
-  section.className = "bg-gradient-to-br from-white via-blue-50 to-sky-100 py-20 px-4 sm:px-8 text-slate-900"; //back ground gradient, TODO: Might remove this later
+  section.className = "bg-gradient-to-br from-white via-blue-50 to-sky-100 py-6 px-4 sm:px-8 text-slate-900"; //back ground gradient, TODO: Might remove this later
 
   const inner = document.createElement("div");
   inner.className = "mx-auto w-full max-w-7xl flex flex-col gap-12";
@@ -187,10 +187,10 @@ function renderOffers(target, offers) {
 /**
  * Create the banner that appears at the top of the offers section
  */
-function createBanner() {
+  function createBanner() {
   const banner = document.createElement("div");
   //Banner with animated gradient background, same style as the CTA buttons
-  banner.className = "relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 px-8 py-6 text-center shadow-[0_25px_60px_rgba(79,70,229,0.35)] animate-cta-streak";
+  banner.className = "relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 py-6 text-center shadow-[0_25px_60px_rgba(79,70,229,0.35)] animate-cta-streak";
 
   const headingWrapper = document.createElement("div");
   headingWrapper.className = "relative z-10 flex flex-col gap-3";
@@ -208,8 +208,8 @@ function createBanner() {
   headingWrapper.appendChild(subheading);
 
   banner.appendChild(headingWrapper);
-  return banner;
-}
+    return banner;
+  }
 
 /**
  * Render a friendly message when we have no visible data to show.

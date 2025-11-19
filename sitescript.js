@@ -493,8 +493,8 @@ function loadTailwind() {
     link.id = TAILWIND_STYLES_ID;
     link.rel = "stylesheet";
     //Load from GitHub via jsDelivr CDN - update the username/repo if needed
-    //link.href = "https://cdn.jsdelivr.net/gh/rayvu02/jsRepoTest@v2.0.0/dist/output.css";
-    link.href = '../dist/output.css';
+    link.href = "https://cdn.jsdelivr.net/gh/rayvu02/jsRepoTest@v2.0.0/dist/output.css";
+    //link.href = '../dist/output.css';
     link.onload = () => {
       link.dataset.ready = "true";
       resolve();

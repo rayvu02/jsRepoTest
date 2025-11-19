@@ -10,6 +10,8 @@ const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTqMMIq6hYycwe
 const FETCH_TIMEOUT_MS = 12000;
 const IMAGE_PLACEHOLDER = "";
 const CTA_TEXT = "Shop Now";
+const BANNER_HEADING = "New Vehicle Offers & Incentives";
+const BANNER_SUBHEADING = "Reed Ford of Kansas City";
 
 let cachedRoot = null; //DOM element where the widget will be mounted
 const TAILWIND_SCRIPT_ID = "tailwind-cdn-script"; //ID of the Tailwind CSS script
@@ -158,7 +160,11 @@ function renderOffers(target, offers) {
   section.className = "bg-gradient-to-br from-white via-blue-50 to-sky-100 py-20 px-4 sm:px-8 text-slate-900"; //back ground gradient, TODO: Might remove this later
 
   const inner = document.createElement("div");
-  inner.className = "mx-auto w-full max-w-7xl";
+  inner.className = "mx-auto w-full max-w-7xl flex flex-col gap-12";
+
+  // Create and add banner at the top
+  const banner = createBanner();
+  inner.appendChild(banner);
 
   const cardsWrapper = document.createElement("div");
   //Grid layout for the cards: 1 column on mobile, 2 columns max on larger screens for wider cards
@@ -176,6 +182,33 @@ function renderOffers(target, offers) {
   target.appendChild(section);
 
   console.log("[sitescript] renderOffers: render complete");
+}
+
+/**
+ * Create the banner that appears at the top of the offers section
+ */
+function createBanner() {
+  const banner = document.createElement("div");
+  //Banner with animated gradient background, same style as the CTA buttons
+  banner.className = "relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 px-8 py-6 text-center shadow-[0_25px_60px_rgba(79,70,229,0.35)] animate-cta-streak";
+
+  const headingWrapper = document.createElement("div");
+  headingWrapper.className = "relative z-10 flex flex-col gap-3";
+
+  const heading = document.createElement("h2");
+  //Large heading text, bold, white color
+  heading.className = "text-3xl font-bold text-white sm:text-4xl md:text-5xl";
+  heading.textContent = BANNER_HEADING;
+  headingWrapper.appendChild(heading);
+
+  const subheading = document.createElement("p");
+  //Smaller subheading text, medium weight, slightly transparent white
+  subheading.className = "text-lg font-medium text-white/90 sm:text-xl";
+  subheading.textContent = BANNER_SUBHEADING;
+  headingWrapper.appendChild(subheading);
+
+  banner.appendChild(headingWrapper);
+  return banner;
 }
 
 /**
@@ -238,7 +271,7 @@ function createOfferCard(offerData, index) {
   if (offerData.imageUrl) {
     const media = document.createElement("div");
     //media container: uses background-image so we can control sizing, removes forced aspect ratio
-    media.className = "relative w-full min-h-64 max-h-80 overflow-hidden rounded-xl bg-slate-100 bg-center bg-no-repeat";
+    media.className = "relative w-full min-h-64 max-h-80 overflow-hidden rounded-2xl bg-center bg-no-repeat";
     //set vehicle photo as background
     media.style.backgroundImage = `url('${offerData.imageUrl}')`;
     //background-size contain shows full image, will scale to fit without cropping

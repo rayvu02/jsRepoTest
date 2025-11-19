@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS Properties for Border Animation */
+@property --border-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* Keyframe Animations */
+@keyframes border-rotate {
+  0% {
+    --border-angle: 0deg;
+  }
+  100% {
+    --border-angle: 360deg;
+  }
+}
+
+@keyframes cta-streak {
+  0% {
+    transform: translateX(-200%) skewX(-15deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  90% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+    opacity: 0;
+  }
+}
+
+/* Custom Utility Classes */
+@layer utilities {
+  .animate-border-streak {
+    position: relative;
+    background: linear-gradient(to bottom right, rgb(56, 189, 248), rgb(59, 130, 246), rgb(79, 70, 229));
+    background-clip: padding-box;
+  }
+
+  .animate-border-streak::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 3px;
+    background: conic-gradient(
+      from var(--border-angle),
+      transparent 0deg,
+      transparent 60deg,
+      rgb(251, 146, 60) 90deg,
+      rgb(239, 68, 68) 180deg,
+      rgb(236, 72, 153) 270deg,
+      transparent 300deg,
+      transparent 360deg
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, 
+                  linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: border-rotate 3s linear infinite;
+    pointer-events: none;
+  }
+
+  .animate-cta-streak::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgb(251, 146, 60) 20%, 
+      rgb(239, 68, 68) 50%, 
+      rgb(236, 72, 153) 80%, 
+      transparent 100%);
+    border-radius: inherit;
+    animation: cta-streak 4s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Banner with blurred gradient background */
+  .banner-blurred-gradient {
+    position: relative;
+  }
+
+  .banner-blurred-gradient::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgb(59, 130, 246), rgb(99, 102, 241), rgb(147, 51, 234));
+    border-radius: inherit;
+    filter: blur(15px);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Prevent visited link color from turning buttons black */
+  a.card-cta,
+  a.card-cta:visited,
+  a.card-cta:hover,
+  a.card-cta:active {
+    color: white !important;
+  }
+}
+

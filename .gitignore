@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build output (we commit dist/output.css, but ignore other build artifacts)
+dist/*.map
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+

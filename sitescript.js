@@ -14,8 +14,7 @@ const BANNER_HEADING = "New Vehicle Offers & Incentives";
 const BANNER_SUBHEADING = "Reed Ford of Kansas City";
 
 let cachedRoot = null; //DOM element where the widget will be mounted
-const TAILWIND_SCRIPT_ID = "tailwind-cdn-script"; //ID of the Tailwind CSS script
-const TAILWIND_CONFIG_ID = "tailwind-cdn-config"; //ID of the Tailwind CSS config
+const TAILWIND_STYLES_ID = "tailwind-styles"; //ID of the Tailwind CSS stylesheet link
 let tailwindReadyPromise = null; //Promise that resolves when Tailwind CSS is loaded so it is not loaded multiple times
 
 initializeWidget();
@@ -454,183 +453,57 @@ function escapeHtml(value) {
 }
 
 /**
- * Configure Tailwind CSS to use the custom properties for the border animation. 
- * This is used to create the animated border effect on the cards.
- */
-function configureTailwind() {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  if (document.getElementById(TAILWIND_CONFIG_ID)) {
-    return;
-  }
-
-  const style = document.createElement("style");
-  style.id = TAILWIND_CONFIG_ID;
-  style.textContent = `
-    @property --border-angle {
-      syntax: '<angle>';
-      inherits: false;
-      initial-value: 0deg;
-    }
-
-    @keyframes border-rotate {
-      0% {
-        --border-angle: 0deg;
-      }
-      100% {
-        --border-angle: 360deg;
-      }
-    }
-
-    @keyframes cta-streak {
-      0% {
-        transform: translateX(-200%) skewX(-15deg);
-        opacity: 0;
-      }
-      10% {
-        opacity: 0.7;
-      }
-      50% {
-        opacity: 0.9;
-      }
-      90% {
-        opacity: 0.7;
-      }
-      100% {
-        transform: translateX(200%) skewX(-15deg);
-        opacity: 0;
-      }
-    }
-
-    .animate-border-streak {
-      position: relative;
-      background: linear-gradient(to bottom right, rgb(56, 189, 248), rgb(59, 130, 246), rgb(79, 70, 229));
-      background-clip: padding-box;
-    }
-
-    .animate-border-streak::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      padding: 3px;
-      background: conic-gradient(
-        from var(--border-angle),
-        transparent 0deg,
-        transparent 60deg,
-        rgb(251, 146, 60) 90deg,
-        rgb(239, 68, 68) 180deg,
-        rgb(236, 72, 153) 270deg,
-        transparent 300deg,
-        transparent 360deg
-      );
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, 
-                    linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      animation: border-rotate 3s linear infinite;
-      pointer-events: none;
-    }
-
-    .animate-cta-streak::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(90deg, 
-        transparent 0%, 
-        rgb(251, 146, 60) 20%, 
-        rgb(239, 68, 68) 50%, 
-        rgb(236, 72, 153) 80%, 
-        transparent 100%);
-      border-radius: inherit;
-      animation: cta-streak 4s ease-in-out infinite;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    /* Banner with blurred gradient background */
-    .banner-blurred-gradient {
-      position: relative;
-    }
-
-    .banner-blurred-gradient::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to right, rgb(59, 130, 246), rgb(99, 102, 241), rgb(147, 51, 234));
-      border-radius: inherit;
-      filter: blur(15px);
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    /* Prevent visited link color from turning buttons black */
-    a.card-cta,
-    a.card-cta:visited,
-    a.card-cta:hover,
-    a.card-cta:active {
-      color: white !important;
-    }
-  `;
-  document.head.appendChild(style);
-}
-
-/**
- * Load Tailwind CSS from the CDN.
+ * Load the pre-built Tailwind CSS file from GitHub (via jsDelivr CDN).
+ * This loads only the CSS classes actually used in the script, making it much smaller
+ * and faster than loading the entire Tailwind library.
  */
 function loadTailwind() {
   if (typeof window === "undefined") {
     return Promise.resolve();
   }
 
-  //Inject the custom tailwind animation before the tailwind script is loaded.
-  configureTailwind();
-
-  //If the tailwind script is already loaded, return the promise
+  //If the stylesheet is already loaded, return the existing promise
   if (tailwindReadyPromise) {
     return tailwindReadyPromise;
   }
 
-  //This creates a new promise to load the tailwind script, it will resolve when the script is loaded and the custom animation is injected.
+  //This creates a new promise to load the CSS file, it will resolve when the stylesheet is loaded
   tailwindReadyPromise = new Promise((resolve, reject) => {
-    const existingScript = document.getElementById(TAILWIND_SCRIPT_ID);
-    if (existingScript) {
-      if (existingScript.dataset.ready === "true") {
+    const existingLink = document.getElementById(TAILWIND_STYLES_ID);
+    if (existingLink) {
+      //Check if the link is already loaded by checking if stylesheet is accessible
+      if (existingLink.sheet || existingLink.dataset.ready === "true") {
         resolve();
         return;
       }
-      existingScript.addEventListener(
+      existingLink.addEventListener(
         "load",
         () => {
-          existingScript.dataset.ready = "true";
+          existingLink.dataset.ready = "true";
           resolve();
         },
         { once: true }
       );
-      existingScript.addEventListener("error", reject, { once: true });
+      existingLink.addEventListener("error", reject, { once: true });
       return;
     }
 
-    //This allows us to get access to tailwind classes via the tailwind CDN
-    const script = document.createElement("script"); //Create a new script element to load the tailwind script
-    script.src = "https://cdn.tailwindcss.com"; //Set the source of the script to the tailwind css cdn
-    script.id = TAILWIND_SCRIPT_ID;
-    script.onload = () => {
-      script.dataset.ready = "true";
+    //Create a link element to load the pre-built CSS file from GitHub via jsDelivr CDN
+    const link = document.createElement("link");
+    link.id = TAILWIND_STYLES_ID;
+    link.rel = "stylesheet";
+    //Load from GitHub via jsDelivr CDN - update the username/repo if needed
+    link.href = "https://cdn.jsdelivr.net/gh/rayvu02/jsRepoTest@main/dist/output.css";
+    link.onload = () => {
+      link.dataset.ready = "true";
       resolve();
     };
-    script.onerror = (error) => reject(error);
-    document.head.appendChild(script);
+    link.onerror = (error) => reject(error);
+    document.head.appendChild(link);
   });
 
   return tailwindReadyPromise;
 }
 
 // Kick off Tailwind loading immediately
-configureTailwind();
 loadTailwind();

@@ -189,8 +189,9 @@ function renderOffers(target, offers) {
  */
   function createBanner() {
   const banner = document.createElement("div");
-  //Banner with animated gradient background, same style as the CTA buttons
-  banner.className = "relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 py-6 text-center shadow-[0_25px_60px_rgba(79,70,229,0.35)] animate-cta-streak";
+  //Banner with blurred gradient background (via ::after) and animated sweeping effect (via ::before from animate-cta-streak)
+  //The blurred gradient is on ::after (z-index: 0), the sweeping animation is on ::before (z-index: 1), text is on top (z-index: 10)
+  banner.className = "banner-blurred-gradient relative overflow-hidden rounded-3xl py-6 text-center shadow-[0_25px_60px_rgba(79,70,229,0.35)] animate-cta-streak";
 
   const headingWrapper = document.createElement("div");
   headingWrapper.className = "relative z-10 flex flex-col gap-3";
@@ -550,6 +551,22 @@ function configureTailwind() {
       animation: cta-streak 4s ease-in-out infinite;
       pointer-events: none;
       z-index: 1;
+    }
+
+    /* Banner with blurred gradient background */
+    .banner-blurred-gradient {
+      position: relative;
+    }
+
+    .banner-blurred-gradient::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, rgb(59, 130, 246), rgb(99, 102, 241), rgb(147, 51, 234));
+      border-radius: inherit;
+      filter: blur(15px);
+      z-index: 0;
+      pointer-events: none;
     }
 
     /* Prevent visited link color from turning buttons black */

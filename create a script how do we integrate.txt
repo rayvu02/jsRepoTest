@@ -7,10 +7,10 @@ Make the stuff work with the output.css file. Link to repo: https://github.com/d
 Things should be auto, we pre make components, and divs where components go and people can select which components they want and we pull data from the DB
 
 TODO: 
-- Fix image sizing
+- Fix image sizing -DONE
 - Officate code
-- Banner
-- Trade-in button
+- Banner - DONE
+- Trade-in button -THIS IS ALREADY THERE ON THE SPECIFIC PAGE
 - Figure out how to get a basic script to be generate dynamically by another script and stored in the S3 bucket in a dynamic path with auth. (Auth to be done from the mono repo)
 
 
@@ -22,3 +22,5 @@ Integrate in budget and expense management: go into an account or org and have i
 Build the same components in the analytics page and generate dynamically a report on another site. Another company has the report with data and we need them to send it to an API and we break it down. Our API processes into the DB and we create unique dash boards that has a unique id for that report.l
 
 This link should be public, so people should be able to access this page. We will need to make another domain for it
+
+	

@@ -190,7 +190,7 @@ function renderOffers(target, offers) {
   const banner = document.createElement("div");
   //Banner with blurred gradient background (via ::after) and animated sweeping effect (via ::before from animate-cta-streak)
   //The blurred gradient is on ::after (z-index: 0), the sweeping animation is on ::before (z-index: 1), text is on top (z-index: 10)
-  banner.className = "banner-blurred-gradient relative overflow-hidden rounded-3xl py-6 text-center shadow-[0_25px_60px_rgba(79,70,229,0.35)] animate-cta-streak";
+  banner.className = "banner-blurred-gradient relative overflow-hidden rounded-3xl py-6 px-4 text-center shadow-[0_25px_60px_rgba(79,70,229,0.35)] animate-cta-streak";
 
   const headingWrapper = document.createElement("div");
   headingWrapper.className = "relative z-10 flex flex-col gap-3";

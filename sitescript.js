@@ -269,18 +269,24 @@ function createOfferCard(offerData, index) {
   body.className = "flex h-full flex-col rounded-[26px] border border-white/60 bg-white p-2";
 
   if (offerData.imageUrl) {
-    const media = document.createElement("div");
-    //media container: uses background-image so we can control sizing, removes forced aspect ratio
-    media.className = "relative w-full min-h-64 max-h-80 overflow-hidden rounded-2xl bg-center bg-no-repeat";
-    //set vehicle photo as background
-    media.style.backgroundImage = `url('${offerData.imageUrl}')`;
-    //background-size contain shows full image, will scale to fit without cropping
-    media.style.backgroundSize = "contain";
-    //add ARIA labels for accessibility since background images aren't read by screen readers
-    media.setAttribute('role', 'img');
-    media.setAttribute('aria-label', offerData.title ? `${offerData.title} vehicle photo` : 'Vehicle photo');
+    //Container div that wraps the image
+    //No min-height - container will naturally size to image's aspect ratio
+    const mediaContainer = document.createElement("div");
+    mediaContainer.className = "relative w-full overflow-hidden rounded-2xl";
+    
+    const media = document.createElement("img");
+    //Use img tag so container naturally sizes to image aspect ratio
+    //w-full makes it fill container width, h-auto maintains aspect ratio
+    //object-contain ensures full image is visible without cropping
+    //max-h prevents images from getting too tall, but won't create white space if image is smaller
+    media.className = "w-full h-auto max-h-80 object-contain block";
+    media.src = offerData.imageUrl;
+    media.alt = offerData.title ? `${offerData.title} vehicle photo` : 'Vehicle photo';
+    //Loading attribute for better performance
+    media.loading = "lazy";
 
-    body.appendChild(media);
+    mediaContainer.appendChild(media);
+    body.appendChild(mediaContainer);
   }
 
   const content = document.createElement("div"); //Create a new div element for the content the content area

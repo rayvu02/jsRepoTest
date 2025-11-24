@@ -6,7 +6,7 @@
 
 const ROOT_ID = "rv-site-root";
 const OFFERS_CONTAINER_ID = "offers-container";
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTqMMIq6hYycwe-QiCokW00vnrP1rdI30c9rj7u82gtdEmtQZa7nXV42dHhPeFwe99cogN1JpqJB9x/pub?gid=976470551&single=true&output=csv";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTqMMIq6hYycwe-QiCokW00vnrP1rdI30c9rj7u82gtdEmtQZa7nXV42dHhPeFwe99cogN1JpqJB9x/pub?gid=1087076822&single=true&output=csv";
   const FETCH_TIMEOUT_MS = 12000;
 const IMAGE_PLACEHOLDER = "";
 const CTA_TEXT = "Shop Now";
@@ -367,7 +367,7 @@ async function fetchCsvWithTimeout(url, timeout) {
 }
 
 /**
- * Split the CSV export into data rows (starting at row 11) and return a matrix
+ * Split the CSV export into data rows (starting at row 23) and return a matrix
  * where each entry represents the original comma-separated columns.
  */
 function extractDataRows(csvText) {
@@ -377,7 +377,7 @@ function extractDataRows(csvText) {
 
   const lines = csvText
     .split(/\r?\n/)
-    .slice(10)
+    .slice(22)
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
 
@@ -395,11 +395,11 @@ function normalizeOffers(rows) {
   console.log("[sitescript] normalizeOffers: row count", rows.length);
 
   const MODEL_INDEX = 0; // "Model"
-  const OFFER_INDEX = 1; // "Offer"
-  const DESCRIPTION_INDEX = 2; // "Desc."
-  const VISIBLE_INDEX = 3; // "Visible on Specials"
-  const IMAGE_INDEX = 4; // "Image URL of Vehicle"
-  const LINK_INDEX = 5; // "Link to Vehicle"
+  const OFFER_INDEX = 1; // "Coupon"
+  const DESCRIPTION_INDEX = 2; // "Stock"
+  const VISIBLE_INDEX = 4; // "True/False" (visibility flag)
+  const IMAGE_INDEX = 6; // "image link"
+  const LINK_INDEX = 8; // "link to the deal"
 
   return rows
     .filter((row) => {

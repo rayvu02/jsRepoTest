@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Standalone vehicle specials widget that mirrors the legacy test implementation
  * while remaining self-contained and embeddable on any page.
@@ -20,7 +19,6 @@ let tailwindReadyPromise = null; //Promise that resolves when Tailwind CSS is lo
 initializeWidget();
 
 if (typeof window !== "undefined") {
-  console.log("[sitescript] expose mount function on window");
   window.rvMountHelloWidget = mountHelloWidget;
 }
 
@@ -28,12 +26,10 @@ if (typeof window !== "undefined") {
  * Bootstrap the widget once the DOM is ready so we can safely manipulate the page.
  */
 function initializeWidget() {
-  console.log("[sitescript] initializeWidget: document.readyState", document.readyState);
   if (document.readyState === "loading") {
     document.addEventListener(
       "DOMContentLoaded",
       () => {
-        console.log("[sitescript] initializeWidget: DOMContentLoaded fired");
         void mountHelloWidget();
       },
       { once: true }
@@ -48,14 +44,11 @@ function initializeWidget() {
  * Fetch the Google Sheet, normalise the dataset, and render the offers grid.
  */
 async function mountHelloWidget() {
-  console.log("[sitescript] mountHelloWidget: start");
   try {
     await loadTailwind(); //Wait for Tailwind CSS to load, things will break if it's not loaded first
-    console.log("[sitescript] mountHelloWidget: Tailwind loaded");
     
     const root = ensureRootElement(); //Gets or creates the root element where the widget will be mounted
     if (!root) {
-      console.warn("[sitescript] mountHelloWidget: root not found, abort");
       return;
     }
 
@@ -72,7 +65,6 @@ async function mountHelloWidget() {
 
     renderOffers(root, offers);
   } catch (error) {
-    console.error("[sitescript] mountHelloWidget: failed", error);
     const root = ensureRootElement();
     if (root) {
       renderErrorState(root, error instanceof Error ? error.message : "Unexpected error");
@@ -85,18 +77,14 @@ async function mountHelloWidget() {
  * #offers-container element, fall back to a dedicated root div if necessary.
  */
 function ensureRootElement() {
-  console.log("[sitescript] ensureRootElement: start");
-
   //Check if the root element has already been found and cached, use it if it is
   if (cachedRoot && document.body.contains(cachedRoot)) {
-    console.log("[sitescript] ensureRootElement: using cached root", cachedRoot);
     return cachedRoot;
   }
 
   //Find the div that should already exist on the page
   const offersContainer = document.getElementById(OFFERS_CONTAINER_ID);
   if (offersContainer) {
-    console.log("[sitescript] ensureRootElement: found offers container", offersContainer);
     offersContainer.classList.add("rv-widget");
     cachedRoot = offersContainer;
     return offersContainer;
@@ -105,14 +93,12 @@ function ensureRootElement() {
   //This finds the backup location for the widget if the offers container is not found
   const fallbackRoot = document.getElementById(ROOT_ID);
   if (fallbackRoot) {
-    console.log("[sitescript] ensureRootElement: found fallback root", fallbackRoot);
     cachedRoot = fallbackRoot;
     return fallbackRoot;
   }
 
   //Check if the body element exists, if not, return null means we have no where to put it
   if (!document.body) {
-    console.warn("[sitescript] ensureRootElement: document.body missing");
     return null;
   }
 
@@ -121,7 +107,6 @@ function ensureRootElement() {
   newRoot.id = ROOT_ID;
   newRoot.className = "rv-widget";
   document.body.appendChild(newRoot);
-  console.log("[sitescript] ensureRootElement: created fallback root", newRoot);
 
   cachedRoot = newRoot;
   return newRoot;
@@ -131,8 +116,6 @@ function ensureRootElement() {
  * Show an inline loading message while we fetch data.
  */
 function renderLoadingState(target) {
-  console.log("[sitescript] renderLoadingState: rendering loader");
-
   //Basic stlying for the whole widget while loading
   target.innerHTML = `
     <section class="bg-gradient-to-br from-white via-blue-50 to-sky-100 py-20 px-4 sm:px-8 text-slate-700">
@@ -151,8 +134,6 @@ function renderLoadingState(target) {
  * Present the parsed offers inside the styled card layout.
  */
 function renderOffers(target, offers) {
-  console.log("[sitescript] renderOffers: rendering", offers.length, "offers");
-
   target.innerHTML = ""; //clear the target element (removes any existing content)
 
   const section = document.createElement("section");
@@ -179,8 +160,6 @@ function renderOffers(target, offers) {
   inner.appendChild(cardsWrapper);
   section.appendChild(inner);
   target.appendChild(section);
-
-  console.log("[sitescript] renderOffers: render complete");
 }
 
 /**
@@ -215,7 +194,6 @@ function renderOffers(target, offers) {
  * Render a friendly message when we have no visible data to show.
  */
 function renderEmptyState(target) {
-  console.log("[sitescript] renderEmptyState: no visible offers found");
   target.innerHTML = `
     <section class="bg-gradient-to-br from-white via-blue-50 to-sky-100 py-20 px-4 sm:px-8 text-slate-800">
       <div class="mx-auto max-w-3xl rounded-3xl border border-sky-200 bg-white/95 p-12 text-center shadow-[0_35px_80px_rgba(14,165,233,0.25)] backdrop-blur-md">
@@ -230,7 +208,6 @@ function renderEmptyState(target) {
  * Show an actionable error message when data retrieval fails.
  */
 function renderErrorState(target, message) {
-  console.log("[sitescript] renderErrorState: displaying error", message);
   target.innerHTML = `
     <section class="bg-gradient-to-br from-white via-blue-50 to-sky-100 py-20 px-4 sm:px-8 text-slate-900">
       <div class="mx-auto max-w-3xl rounded-3xl border border-red-200 bg-white/95 p-12 text-center shadow-[0_35px_80px_rgba(249,115,22,0.25)] backdrop-blur-md">
@@ -344,8 +321,7 @@ function createOfferCard(offerData, index) {
  * Fetch the CSV with an AbortController-based timeout to avoid hanging forever.
  */
 async function fetchCsvWithTimeout(url, timeout) {
-  console.log("[sitescript] fetchCsvWithTimeout: fetching", url);
-    const controller = new AbortController();
+  const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), timeout);
 
     try {
@@ -367,7 +343,7 @@ async function fetchCsvWithTimeout(url, timeout) {
 }
 
 /**
- * Split the CSV export into data rows (starting at row 23) and return a matrix
+ * Split the CSV export into data rows (rows 3-22, 1-indexed) and return a matrix
  * where each entry represents the original comma-separated columns.
  */
 function extractDataRows(csvText) {
@@ -377,7 +353,7 @@ function extractDataRows(csvText) {
 
   const lines = csvText
     .split(/\r?\n/)
-    .slice(22)
+    .slice(2, 22) // Rows 3-22 (1-indexed), which is indices 2-21 (0-indexed)
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
 
@@ -392,14 +368,12 @@ function extractDataRows(csvText) {
  * Reduce the raw matrix into normalized offer objects tailored for the UI.
  */
 function normalizeOffers(rows) {
-  console.log("[sitescript] normalizeOffers: row count", rows.length);
-
-  const MODEL_INDEX = 0; // "Model"
-  const OFFER_INDEX = 1; // "Coupon"
-  const DESCRIPTION_INDEX = 2; // "Stock"
-  const VISIBLE_INDEX = 4; // "True/False" (visibility flag)
-  const IMAGE_INDEX = 6; // "image link"
-  const LINK_INDEX = 8; // "link to the deal"
+  const MODEL_INDEX = 0;       // Car model
+  const OFFER_INDEX = 1;       // Special/Offer
+  const DESCRIPTION_INDEX = 2; // Description
+  const VISIBLE_INDEX = 3;     // TRUE/FALSE visibility flag
+  const IMAGE_INDEX = 4;       // Photo link
+  const LINK_INDEX = 5;        // Shop now button link
 
   return rows
     .filter((row) => {
